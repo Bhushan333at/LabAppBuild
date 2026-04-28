@@ -1,26 +1,13 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# buildspec.yml — AWS CodeBuild Configuration
-# Used by AWS CodePipeline to:
-#   1. Build Docker image
-#   2. Push image to Amazon ECR
-#   3. Produce imagedefinitions.json for ECS deployment
-# ─────────────────────────────────────────────────────────────────────────────
-
 version: 0.2
 
 env:
   variables:
-      AWS_ACCOUNT_ID: "100731996165"  # or set as env var in CodeBuild
-    AWS_DEFAULT_REGION: "us-east-1"
+    AWS_ACCOUNT_ID: "100731996165"
+    AWS_DEFAULT_REGION: "ap-south-1"
     IMAGE_REPO_NAME: "habitflow"
     CONTAINER_NAME: "habitflow-container"
-    
 
-  # These are set in CodeBuild environment or pulled from SSM/Secrets Manager
-  
 phases:
-
-  # ── Install phase: install any required tools ────────────────────────────
   install:
     runtime-versions:
       docker: 20
@@ -28,7 +15,6 @@ phases:
       - echo "Installing dependencies..."
       - pip install --upgrade awscli
 
-  # ── Pre-build: authenticate to Amazon ECR ────────────────────────────────
   pre_build:
     commands:
       - echo "Logging in to Amazon ECR..."
@@ -37,7 +23,6 @@ phases:
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - echo "Image tag => $IMAGE_TAG"
 
-  # ── Build: build Docker image ─────────────────────────────────────────────
   build:
     commands:
       - echo "Build started on $(date)"
@@ -46,7 +31,6 @@ phases:
       - docker tag $IMAGE_REPO_NAME:latest $REPOSITORY_URI:latest
       - docker tag $IMAGE_REPO_NAME:latest $REPOSITORY_URI:$IMAGE_TAG
 
-  # ── Post-build: push image to ECR and write artifact ────────────────────
   post_build:
     commands:
       - echo "Build completed on $(date)"
@@ -57,13 +41,11 @@ phases:
       - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
       - cat imagedefinitions.json
 
-# Artifacts passed to CodePipeline deploy stage
 artifacts:
   files:
     - imagedefinitions.json
   discard-paths: yes
 
-# Cache Docker layers to speed up future builds
 cache:
   paths:
     - '/root/.docker/**/*'
