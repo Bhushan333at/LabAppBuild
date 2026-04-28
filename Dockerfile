@@ -2,7 +2,7 @@
 # HabitFlow — Dockerfile
 # Serves static HTML via nginx
 # ─────────────────────────────────────────────
-FROM nginx:alpine
+FROM public.ecr.aws/nginx/nginx:alpine
 
 # Remove default nginx page
 RUN rm -rf /usr/share/nginx/html/*
