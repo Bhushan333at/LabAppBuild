@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# buildspec.yml — AWS CodeBuild Configuration
+# Used by AWS CodePipeline to:
+#   1. Build Docker image
+#   2. Push image to Amazon ECR
+#   3. Produce imagedefinitions.json for ECS deployment
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: "us-east-1"
+    IMAGE_REPO_NAME: "habitflow"
+    CONTAINER_NAME: "habitflow-container"
+
+  # These are set in CodeBuild environment or pulled from SSM/Secrets Manager
+  parameter-store:
+    AWS_ACCOUNT_ID: "/habitflow/aws_account_id"   # or set as env var in CodeBuild
+
+phases:
+
+  # ── Install phase: install any required tools ────────────────────────────
+  install:
+    runtime-versions:
+      docker: 20
+    commands:
+      - echo "Installing dependencies..."
+      - pip install --upgrade awscli
+
+  # ── Pre-build: authenticate to Amazon ECR ────────────────────────────────
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - echo "Image tag => $IMAGE_TAG"
+
+  # ── Build: build Docker image ─────────────────────────────────────────────
+  build:
+    commands:
+      - echo "Build started on $(date)"
+      - echo "Building Docker image..."
+      - docker build -t $IMAGE_REPO_NAME:latest .
+      - docker tag $IMAGE_REPO_NAME:latest $REPOSITORY_URI:latest
+      - docker tag $IMAGE_REPO_NAME:latest $REPOSITORY_URI:$IMAGE_TAG
+
+  # ── Post-build: push image to ECR and write artifact ────────────────────
+  post_build:
+    commands:
+      - echo "Build completed on $(date)"
+      - echo "Pushing Docker image to ECR..."
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Writing imagedefinitions.json..."
+      - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - cat imagedefinitions.json
+
+# Artifacts passed to CodePipeline deploy stage
+artifacts:
+  files:
+    - imagedefinitions.json
+  discard-paths: yes
+
+# Cache Docker layers to speed up future builds
+cache:
+  paths:
+    - '/root/.docker/**/*'
