@@ -8,10 +8,8 @@ FROM public.ecr.aws/nginx/nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy app files
-COPY app/ /usr/share/nginx/html/
+COPY . /usr/share/nginx/html/
 
-# Custom nginx config for SPA support
-COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
