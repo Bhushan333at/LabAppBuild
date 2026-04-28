@@ -10,14 +10,14 @@ version: 0.2
 
 env:
   variables:
+      AWS_ACCOUNT_ID: "100731996165"  # or set as env var in CodeBuild
     AWS_DEFAULT_REGION: "us-east-1"
     IMAGE_REPO_NAME: "habitflow"
     CONTAINER_NAME: "habitflow-container"
+    
 
   # These are set in CodeBuild environment or pulled from SSM/Secrets Manager
-  parameter-store:
-    AWS_ACCOUNT_ID: "100731996165"  # or set as env var in CodeBuild
-
+  
 phases:
 
   # ── Install phase: install any required tools ────────────────────────────
