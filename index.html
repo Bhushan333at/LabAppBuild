@@ -389,7 +389,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-value" id="statStreak" style="color: var(--accent3)">4</div>
-      <div class="stat-label">Best Streak 🔥</div>
+      <div class="stat-label">Best Streak 🔥🙌</div>
     </div>
   </div>
 
@@ -489,7 +489,7 @@
           else break;
         }
         h.streak = Math.max(h.streak || 0, streak);
-        showToast('🔥 ' + h.name + ' done!');
+        showToast('🔥 🙌' + h.name + ' done!');
       }
     } else {
       h.completions[today] = 0;
@@ -558,7 +558,7 @@
           <div class="habit-name">${h.name}</div>
           <div class="habit-meta">
             <span>${count}/${h.goal} today</span>
-            ${streak > 0 ? `<span class="streak-badge">🔥 ${streak} day streak</span>` : ''}
+            ${streak > 0 ? `<span class="streak-badge">🔥 🙌${streak} day streak</span>` : ''}
           </div>
           <div class="streak-dots" style="margin-top:10px">${dots}</div>
         </div>
